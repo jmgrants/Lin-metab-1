@@ -1,0 +1,134 @@
+---
+title: "Lin- cell metabolomics analysis"
+author: "Jennifer Grants"
+date: "8/28/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.width = 5, fig.height = 6)
+```
+
+```{r warning = FALSE, message = FALSE}
+library(tidyverse)
+library(here)
+library(broom)
+library(ggsignif)
+```
+
+## 1) Lin- cell pellets harvested and prepared for GC/MS analysis by J. Grants (2018-06-28)
+File path for prep documents: F:\Karsan Lab\Personal Folders\Jennifer G\miR-146a Metabolism project\Metabolomics analysis\2018-06-28 Lin-metab-1
+
+
+
+## 2) Data acquired by UVic Proteomics
+Original data files from UVic saved: F:\Karsan Lab\Personal Folders\Jennifer G\miR-146a Metabolism project\Metabolomics analysis\2018-06-28 Lin-metab-1\Results\Original report
+
+
+
+```{r data, warning = FALSE}
+glc <- read.csv("data/Glucose_metab.csv") %>% 
+  separate(col = Sample_nmol.10.6.cells, into = c("Genotype", "x"), sep = "-") %>%
+  select(-x) %>%
+  gather(Metabolite, nmol_10Mcells, -Genotype)
+FA <- read.csv("data/FA_metab.csv") %>% 
+  separate(col = Sample_nmol.10.6.cells, into = c("Genotype", "x"), sep = "-") %>%
+  select(-x) %>%
+  gather(Metabolite, nmol_10Mcells, -Genotype)
+TCA <- read.csv("data/TCA_metab.csv") %>% 
+  separate(col = Sample_nmol.10.6.cells, into = c("Genotype", "x"), sep = "-") %>%
+  select(-x) %>%
+  gather(Metabolite, nmol_10Mcells, -Genotype)
+other <- read.csv("data/Other_metab.csv") %>% 
+  separate(col = Sample_nmol.10.6.cells, into = c("Genotype", "x"), sep = "-") %>%
+  select(-x) %>%
+  gather(Metabolite, nmol_10Mcells, -Genotype)
+PO4 <- read.csv("data/PO4_metab.csv") %>% 
+  separate(col = Sample_nmol.10.6.cells, into = c("Genotype", "x"), sep = "-") %>%
+  select(-x) %>%
+  gather(Metabolite, nmol_10Mcells, -Genotype)
+
+```
+
+## 3) Identify significant differences between WT vs. miR-146a KO, and WT vs. IL6/miR-146a DKO
+
+### Glucose metabolism
+```{r glc_initial_plots, fig.width = 10}
+glc$Genotype <- factor(glc$Genotype, levels = c("WT", "KO", "IDKO"))
+
+ggplot(glc, aes(Genotype, nmol_10Mcells)) +
+  geom_boxplot(aes(fill = Genotype)) +
+  facet_wrap(~Metabolite, nrow = 1) +
+  labs(y = expression("nmol / 10"^"6"~"cells")) +
+  scale_y_continuous(trans = "log10") +
+  theme_classic(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_signif(comparisons = list(c("WT", "KO"), c("WT", "IDKO")), test = "t.test", map_signif_level = TRUE, step_increase = 0.1, tip_length = 0.01)
+```
+
+### TCA metabolism
+```{r tca_initial_plots, fig.width = 12, fig.height = 12}
+TCA$Genotype <- factor(TCA$Genotype, levels = c("WT", "KO", "IDKO"))
+
+ggplot(TCA, aes(Genotype, nmol_10Mcells)) +
+  geom_boxplot(aes(fill = Genotype)) +
+  facet_wrap(~Metabolite, nrow = 2) +
+  labs(y = expression("nmol / 10"^"6"~"cells")) +
+  scale_y_continuous(trans = "log10") +
+  theme_classic(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_signif(comparisons = list(c("WT", "KO"), c("WT", "IDKO")), test = "t.test", map_signif_level = TRUE, step_increase = 0.1, tip_length = 0.01)
+```
+
+
+### FA metabolism
+```{r fa_initial_plots, fig.width = 14, fig.height= 18}
+FA$Genotype <- factor(FA$Genotype, levels = c("WT", "KO", "IDKO"))
+FA <- filter(FA, nmol_10Mcells != "NQ")
+FA$nmol_10Mcells <- as.numeric(FA$nmol_10Mcells)
+
+ggplot(FA, aes(Genotype, nmol_10Mcells)) +
+  geom_boxplot(aes(fill = Genotype)) +
+  facet_wrap(~Metabolite, nrow = 3) +
+  labs(y = expression("nmol / 10"^"6"~"cells")) +
+  scale_y_continuous(trans = "log10") +
+  theme_classic(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        strip.text = element_text(size = 7)) +
+  geom_signif(comparisons = list(c("WT", "KO"), c("WT", "IDKO")), test = "t.test", map_signif_level = TRUE, step_increase = 0.1, tip_length = 0.01)
+```
+
+
+### 'Other' metabolism
+```{r other_initial_plots, fig.width = 12, fig.height= 18}
+other$Genotype <- factor(other$Genotype, levels = c("WT", "KO", "IDKO"))
+
+ggplot(other, aes(Genotype, nmol_10Mcells)) +
+  geom_boxplot(aes(fill = Genotype)) +
+  facet_wrap(~Metabolite, nrow = 3) +
+  labs(y = expression("nmol / 10"^"6"~"cells")) +
+  scale_y_continuous(trans = "log10") +
+  theme_classic(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        strip.text = element_text(size = 9)) +
+  geom_signif(comparisons = list(c("WT", "KO"), c("WT", "IDKO")), test = "t.test", map_signif_level = TRUE, step_increase = 0.1, tip_length = 0.01)
+```
+
+
+
+### PO4 metabolism
+```{r po4_initial_plots, fig.width = 12}
+PO4$Genotype <- factor(PO4$Genotype, levels = c("WT", "KO", "IDKO"))
+
+ggplot(PO4, aes(Genotype, nmol_10Mcells)) +
+  geom_boxplot(aes(fill = Genotype)) +
+  facet_wrap(~Metabolite, nrow = 1) +
+  labs(y = expression("nmol / 10"^"6"~"cells")) +
+  scale_y_continuous(trans = "log10") +
+  theme_classic(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_signif(comparisons = list(c("WT", "KO"), c("WT", "IDKO")), test = "t.test", map_signif_level = TRUE, step_increase = 0.1, tip_length = 0.01)
+```
+
+
+
